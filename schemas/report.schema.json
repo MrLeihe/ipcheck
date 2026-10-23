@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ipcheck:report:1.0",
+  "title": "ipcheck local report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "created_at", "checks", "summary"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "checks": { "type": "array", "items": { "$ref": "#/$defs/check" } },
+    "summary": { "$ref": "#/$defs/summary" }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "group",
+        "label",
+        "status",
+        "severity",
+        "summary",
+        "evidence",
+        "data",
+        "source",
+        "observed_at"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "group": { "type": "string" },
+        "label": { "type": "string" },
+        "status": {
+          "enum": ["completed", "unknown", "unsupported", "skipped"]
+        },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "summary": { "type": "string" },
+        "evidence": { "type": "array", "items": { "type": "string" } },
+        "data": { "type": "object" },
+        "source": { "type": "string" },
+        "observed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completed",
+        "unknown",
+        "skipped",
+        "total",
+        "issue_ids",
+        "message"
+      ],
+      "properties": {
+        "completed": { "type": "integer", "minimum": 0 },
+        "unknown": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "total": { "type": "integer", "minimum": 0 },
+        "issue_ids": { "type": "array", "items": { "type": "string" } },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}
