@@ -28,7 +28,7 @@ def check_timezone() -> list[CheckResult]:
         offset = offset_minutes(name)
         results.append(CheckResult(check_id, "system", label,
                                    "completed" if offset is not None else "unknown", "info",
-                                   name if offset is not None and name else "未能解析 IANA 时区",
+                                   name if offset is not None and name else "时区解析失败",
                                    data={"timezone": name if offset is not None else None, "offset_minutes": offset}, source=source))
     return results
 
@@ -53,8 +53,6 @@ def _comparison_data(local: CheckResult | None, exit_zone: CheckResult) -> dict[
     left = offset_minutes(local_name if isinstance(local_name, str) else None)
     right = offset_minutes(exit_name if isinstance(exit_name, str) else None)
     valid_local = local is not None and local.status == "completed" and left is not None
-    if local is not None and local.id == "browser.timezone":
-        valid_local = valid_local and local.data.get("offset_minutes") == left
     known = valid_local and exit_zone.status == "completed" and right is not None
     return {"same_iana": local_name == exit_name if known else None,
             "same_offset": left == right if known else None,
@@ -78,13 +76,12 @@ def compare_timezone(checks: list[CheckResult]) -> list[CheckResult]:
             results.append(zone)
             if key == "api":
                 comparisons[key] = _comparison_data(cli, zone)
-    local = lookup.get("browser.timezone") or lookup.get("timezone.system")
+    local = lookup.get("timezone.system")
     web = _comparison_data(local, web_zone)
     comparisons["web"] = web
     known = web["same_iana"] is not None and web["same_offset"] is not None
     consistent = web["same_iana"] is True and web["same_offset"] is True
-    browser = local is not None and local.id == "browser.timezone"
-    subject = "浏览器" if browser else "系统"
+    subject = "系统"
     if not known:
         missing = f"{subject}时区" if not web["local_valid"] else "Claude 网页出口时区"
         summary = f"请核对{missing}，补全后再比较"
@@ -92,14 +89,12 @@ def compare_timezone(checks: list[CheckResult]) -> list[CheckResult]:
         summary = f"{subject}与 Claude 网页出口的 IANA 名称、当前偏移一致"
     else:
         summary = f"如需与 Claude 网页出口保持一致，可考虑使用 {web['exit_timezone']}"
-    if not browser and known and not consistent:
-        summary += "；请核对浏览器时区"
     evidence = (
         "建议仅参考 Claude 网页出口；普通检测出口不作为修改系统时区的依据。",
         "普通 API 请求通常不携带本机 IANA 时区；自定义客户端可能上传，本检查未审计实际请求内容。",
         "当前偏移相同不代表 IANA 名称相同；差异只作为环境核对线索，不用于判断账号风险。",
-        "网页脚本可读取浏览器 IANA 时区。未采样时仅参考系统，CLI 的 TZ 不代表浏览器时区。",
-        "网页出口来自 Python 对 claude.ai 的匿名探测；浏览器代理规则不同时需另行核对。",
+        "本工具读取系统 IANA 时区；CLI 的 TZ 环境变量只在单独一行展示。",
+        "网页出口来自 Python 对 claude.ai 的匿名探测；客户端代理规则不同时需另行核对。",
         "IP 地理归属可能不准确；仅在希望保持环境一致且出口稳定时考虑调整，不自动修改配置。",
     )
     results.append(CheckResult("timezone.advice", "system", "时区建议", "completed" if known else "unknown",

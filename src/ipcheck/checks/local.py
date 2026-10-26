@@ -74,7 +74,7 @@ def check_local(home: Path | None = None) -> list[CheckResult]:
     results.append(CheckResult("local.identity", "local", "账号备份摘要",
                                "unknown" if identity_failed or backup_unknown else "completed",
                                "warning" if different_count else "info",
-                               f"发现 {different_count} 份与当前账号不同的备份" if different_count else "未确认存在不同账号的备份",
+                               f"不同账号备份：{different_count} 份" if different_count else "无法比对账号备份" if identity_failed or backup_unknown else "无账号备份" if backup_count == 0 else "备份账号一致",
                                ("只在内存比对账号标识，报告不包含邮箱、UUID 或凭证；不能据此推断服务端关联。",),
                                {"current_config_exists": identity_file.exists(), "backups_checked": backup_count,
                                 "different_account_backups": different_count, "unverified_backups": backup_unknown}))

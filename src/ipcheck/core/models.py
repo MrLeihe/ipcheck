@@ -40,12 +40,14 @@ class Report:
     checks: list[CheckResult]
     id: str = field(default_factory=lambda: str(uuid4()))
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    # Local-only runs do not expect Claude checks; missing ones are not "incomplete".
+    network_enabled: bool = True
 
     def to_dict(self) -> dict[str, JsonValue]:
         from ipcheck.core.summary import summarize
 
         return {
-            "schema_version": "1.0", "id": self.id, "created_at": self.created_at,
+            "schema_version": "1.1", "id": self.id, "created_at": self.created_at,
             "checks": [check.to_dict() for check in self.checks],
-            "summary": summarize(self.checks),
+            "summary": redact(summarize(self.checks, network_expected=self.network_enabled)),
         }

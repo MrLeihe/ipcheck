@@ -1,9 +1,0 @@
-{
-  "timezone": "Asia/Shanghai",
-  "offset_minutes": 480,
-  "locale": "zh-CN",
-  "languages": ["zh-CN", "en"],
-  "user_agent": "Synthetic test browser",
-  "platform": "Test platform",
-  "fonts": null
-}

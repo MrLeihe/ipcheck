@@ -47,7 +47,9 @@ class RouteTests(unittest.TestCase):
         for result in results:
             self.assertEqual(result.status, 'completed')
             self.assertEqual(result.data['timezone'], 'Asia/Taipei')
-            self.assertNotIn('colo', result.data)
+            # colo is retained as an observation but never used as the exit timezone.
+            self.assertEqual(result.data['colo'], 'SIN')
+            self.assertIsInstance(result.data['latency_ms'], int)
 
     def test_failed_api_does_not_borrow_web_or_general_exit(self):
         routes = check_claude_routes(TraceClient(fail_host='api.anthropic.com'))
@@ -111,6 +113,6 @@ class RouteTests(unittest.TestCase):
         zones = {result.id: result for result in comparisons}
         self.assertTrue(zones['timezone.advice'].data['comparisons']['api']['same_offset'])
         self.assertFalse(zones['timezone.advice'].data['comparisons']['api']['same_iana'])
-        text = render_text(Report(baseline + routes + comparisons))
+        text = render_text(Report(baseline + routes + comparisons), details=True)
         for value in ('检测出口时区', 'Claude API 时区', 'Claude 网页时区', 'Asia/Kuala_Lumpur', 'Asia/Taipei', 'UTC+08:00'):
             self.assertIn(value, text)

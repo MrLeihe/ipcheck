@@ -10,6 +10,7 @@ from unittest.mock import patch
 from ipcheck.cli import main
 from ipcheck.core.models import CheckResult, Report
 from ipcheck.output.render import render_json, render_text
+from tests.unit.test_assessment import baseline
 
 
 def cell_width(text: str) -> int:
@@ -28,6 +29,7 @@ class RenderTests(unittest.TestCase):
         compact = render_text(report)
         self.assertIn("203.0.113.10", compact)
         self.assertIn("192.0.2.53", compact)
+        self.assertIn("192.0.2.53", render_text(report, details=True))
         self.assertNotIn('"observations"', compact)
         self.assertNotIn("fixture-evidence", compact)
         self.assertIn("fixture-evidence", render_text(report, details=True))
@@ -40,12 +42,13 @@ class RenderTests(unittest.TestCase):
             CheckResult("c", "system", "平台", "unsupported", "info", "不支持"),
             CheckResult("d", "system", "可选项", "skipped", "info", "未启用"),
         ])
-        text = render_text(report)
+        text = render_text(report, details=True)
         for state in ("需核对", "未验证", "不支持", "已跳过"):
             self.assertIn(state, text)
-        self.assertIn("完成 1/4", text)
-        self.assertIn("待核对 1", text)
-        self.assertIn("未验证 2", text)
+        self.assertNotIn("检测概况", text)
+        self.assertNotIn("检测提示", text)
+        self.assertIn("综合结论", text)
+        self.assertIn("检测建议", text)
 
     def test_partial_egress_is_not_shown_as_verified_or_ipv6_disabled(self):
         report = Report([
@@ -67,7 +70,7 @@ class RenderTests(unittest.TestCase):
                                            "timezone": "Example/Timezone"})])
         for width in (24, 40, 56, 80, 100, 120):
             for color in (False, True):
-                text = render_text(report, color=color, width=width)
+                text = render_text(report, details=True, color=color, width=width)
                 plain = re.sub(r"\x1b\[[0-9;]+m", "", text)
                 for value in ("示例城市", "Example ISP", "Example Org", "AS64500"):
                     self.assertIn(value, plain)
@@ -97,7 +100,7 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(without_styles, text)
 
     def test_cli_uses_color_only_for_tty_unless_disabled(self):
-        report = Report([CheckResult("test", "network", "test", "completed", "info", "done")])
+        report = Report(baseline())
         for tty, no_color, term, expected in ((False, False, "xterm", False), (True, False, "xterm", True),
                                                (True, True, "xterm", False), (True, False, "dumb", False)):
             with self.subTest(tty=tty, no_color=no_color, term=term):

@@ -91,15 +91,19 @@ def location_check(client: HttpClient, ip: str, fallback: HttpClient | None = No
             data = _location_data(lookup, ip)
             data["lookup_route"] = route
             evidence = tuple(failures) + (f"查询已观测的 {ip}；地理数据库可能不准确。",
-                                         "归属查询使用直连回退，未改变出口观测请求路径。" if route == "direct" else "归属查询遵循当前系统/进程代理配置。",
+                                         "归属查询已绕过系统/进程代理；无法绕过 TUN/VPN，未改变出口观测请求路径。" if route == "direct" else "归属查询遵循当前系统/进程代理配置。",
                                          "未将非机房标记直接认定为住宅 IP。")
             return CheckResult("network.location", "network", "检测出口归属", "completed", "info",
                                " / ".join(str(data.get(key)) for key in ("country", "city") if data.get(key)) or "已取得归属数据",
                                evidence, data, "ipwho.is")
         except ProviderError as exc:
-            failures.append(f"{'默认路径' if route == 'system' else '归属直连'}：{exc}")
+            failures.append(f"{'默认路径' if route == 'system' else '绕过系统代理'}：{exc}")
     return CheckResult("network.location", "network", "检测出口归属", "unknown", "info", failures[-1],
                        tuple(failures), {"ip": ip}, "ipwho.is")
+
+
+def _yes_no(value: object) -> bool | None:
+    return True if value == "yes" else False if value == "no" else None
 
 
 def reputation_checks(client: HttpClient, ip: str) -> list[CheckResult]:
@@ -107,19 +111,41 @@ def reputation_checks(client: HttpClient, ip: str) -> list[CheckResult]:
     try:
         raw = client.json(f"https://proxycheck.io/v2/{ip}?risk=1&vpn=1&asn=1")
         item = raw.get(ip)
-        score = item.get("risk") if isinstance(item, dict) else None
-        if raw.get("status") not in ("ok", "warning") or isinstance(score, bool) or not isinstance(score, (int, str)):
-            raise ProviderError("信誉服务没有提供有效评分（可能受配额限制）")
-        try:
+        if raw.get("status") not in ("ok", "warning") or not isinstance(item, dict):
+            raise ProviderError("信誉服务未返回有效数据（可能受配额限制）")
+        # Classify only explicit provider types; ASN / ISP names alone are insufficient.
+        kind = item.get("type")
+        kind = kind.strip().lower() if isinstance(kind, str) else ""
+        classification = {"residential": "疑似住宅 IP", "hosting": "疑似机房 IP",
+                          "datacenter": "疑似机房 IP", "data center": "疑似机房 IP",
+                          "business": "商业网络（住宅属性未知）", "wireless": "疑似移动网络",
+                          "mobile": "疑似移动网络", "vpn": "VPN 网络（住宅属性未知）",
+                          "proxy": "代理网络（住宅属性未知）", "tor": "Tor 出口"}.get(kind, "IP 类型未知")
+        data: dict[str, JsonValue] = {"ip": ip, "classification": classification,
+                                      "type": kind[:80], "score": None,
+                                      "proxy": _yes_no(item.get("proxy")),
+                                      "vpn": _yes_no(item.get("vpn")),
+                                      "tor": _yes_no(item.get("tor")),
+                                      "crawler": _yes_no(item.get("crawler"))}
+        score = item.get("risk")
+        valid_score = (isinstance(score, int) and not isinstance(score, bool)) or (
+            isinstance(score, str) and len(score) <= 3 and score.isascii() and score.isdigit())
+        if valid_score:
             score = int(score)
-        except ValueError:
-            raise ProviderError("信誉服务评分格式无效") from None
-        if not 0 <= score <= 100:
-            raise ProviderError("信誉服务评分超出范围")
-        results.append(CheckResult("network.reputation", "network", "第三方 IP 评分", "completed", "warning" if score >= 30 else "info",
-                                   f"proxycheck.io：{score}/100", ("第三方信誉分不代表账号封禁概率。",), {"ip": ip, "score": score}, "proxycheck.io"))
+            valid_score = 0 <= score <= 100
+        if valid_score:
+            data["score"] = score
+        # A type can be returned even when the risk score is unavailable.
+        results.append(CheckResult("network.reputation", "network", "IP 类型与信誉",
+                                   "completed" if valid_score else "unknown",
+                                   "warning" if valid_score and score >= 30 else "info",
+                                   f"{classification} · 信誉评分 {score}/100" if valid_score else f"{classification} · 评分未取得",
+                                   ("IP 类型和评分来自 proxycheck.io，数据库可能误判。",
+                                    "评分越高代表该服务评估的 IP 风险越高，不是 Claude 的账号风险分。",
+                                    "住宅 IP 不保证安全，机房 IP 也不等于违规。"), data, "proxycheck.io"))
     except ProviderError as exc:
-        results.append(CheckResult("network.reputation", "network", "第三方 IP 评分", "unknown", "info", str(exc), source="proxycheck.io"))
+        results.append(CheckResult("network.reputation", "network", "IP 类型与信誉", "unknown", "info", str(exc),
+                                   data={"ip": ip}, source="proxycheck.io"))
     try:
         raw = client.json(f"https://api.stopforumspam.org/api?json=1&ip={ip}")
         item = raw.get("ip")
@@ -130,7 +156,7 @@ def reputation_checks(client: HttpClient, ip: str) -> list[CheckResult]:
                                    "该服务收录了举报记录" if appears else "该服务未收录举报记录",
                                    ("未收录不代表没有滥用或其他服务的风险记录。",), {"ip": ip, "listed": bool(appears)}, "StopForumSpam"))
     except ProviderError as exc:
-        results.append(CheckResult("network.abuse", "network", "公开举报记录", "unknown", "info", str(exc), source="StopForumSpam"))
+        results.append(CheckResult("network.abuse", "network", "公开举报记录", "unknown", "info", str(exc), data={"ip": ip}, source="StopForumSpam"))
     return results
 
 

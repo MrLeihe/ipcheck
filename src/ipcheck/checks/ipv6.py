@@ -75,7 +75,7 @@ def check_local_ipv6() -> list[CheckResult]:
     info = command(["/usr/sbin/networksetup", "-getinfo", service]) if service else None
     mode = configuration_mode(info) if info is not None else None
     labels = {"off": "已关闭", "automatic": "自动配置", "manual": "手动配置", "link_local": "仅本地链路"}
-    summary = f"{labels[mode]} · {service} ({interface})" if mode else "未能确认当前网络服务的 IPv6 配置"
+    summary = f"{labels[mode]} · {service} ({interface})" if mode else "无法确认"
     results = [CheckResult("ipv6.configuration", "network", "本机 IPv6 配置", "completed" if mode else "unknown",
                            "info", summary,
                            ("只描述 IPv4 默认路由所对应的网络服务，不代表其他网卡、VPN 或远端代理。",
@@ -86,12 +86,12 @@ def check_local_ipv6() -> list[CheckResult]:
     inventory = address_inventory(interfaces or "")
     available = interfaces is not None and inventory["parsed"] is True
     if not available:
-        message = "无法读取活动接口的 IPv6 地址状态"
+        message = "读取失败"
     elif inventory["global_count"]:
         names = inventory["global_interfaces"]
-        message = "发现公网 IPv6 地址 · " + " / ".join(names if isinstance(names, list) else [])
+        message = "有公网地址 · " + " / ".join(names if isinstance(names, list) else [])
     else:
-        message = "未发现活动公网 IPv6 地址"
+        message = "无公网 IPv6 地址"
     results.append(CheckResult("ipv6.interfaces", "network", "本机 IPv6 地址", "completed" if available else "unknown",
                                "info", message,
                                ("检查已启用、非 inactive 接口，忽略回环及尚未就绪的地址。",

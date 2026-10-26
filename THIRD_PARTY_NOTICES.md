@@ -12,6 +12,6 @@ This project incorporates adapted implementation ideas and portions from:
    - Reviewed commit: `078e7baa1d2a08df28da3f25dacb90e687f4c79f`.
    - Copyright (c) 2026 yacuo / CheckCC.
    - MIT License, preserved in `licenses/yacuo-check-cc-MIT.txt`.
-   - Browser sampling and limited font-width comparison were adapted. The original risk scoring and public-site design are not included.
+   - Browser sampling and limited font-width comparison were adapted in earlier revisions. Protocol 1.1 removed the local web UI and all browser sampling, so none of that code remains in the current version. The original risk scoring and public-site design are not included.
 
 Modified and newly written project code is distributed under Apache License 2.0. The above third-party notices and applicable license terms remain in effect.

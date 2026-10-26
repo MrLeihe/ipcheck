@@ -78,19 +78,5 @@ def system_proxy() -> tuple[list[str], bool]:
     return parse_macos_proxy(text or ""), text is not None
 
 
-def tunnel_routes() -> tuple[list[str], bool]:
-    name = platform.system()
-    if name == "Darwin":
-        text = command(["netstat", "-rn", "-f", "inet"])
-    elif name == "Linux":
-        text = command(["ip", "route"])
-    else:
-        return [], False
-    if text is None:
-        return [], False
-    names = sorted(set(re.findall(r"\b(?:utun|tun|tap|wg|ppp)\d*\b", text)))
-    return names, True
-
-
 def environment_proxy_names() -> list[str]:
     return [name for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy") if os.environ.get(name)]

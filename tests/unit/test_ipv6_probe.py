@@ -49,7 +49,7 @@ class IPv6ProbeTests(unittest.TestCase):
         self.assertEqual(result.data['successful_sources'], 2)
         for _, url in IPV6_SOURCES:
             self.assertIn(url, client.calls)
-        self.assertIn('两个来源返回相同 IPv6', render_text(Report([result])))
+        self.assertIn('两个来源返回相同 IPv6', render_text(Report([result]), details=True))
         self.assertIn('icanhazip IPv6', render_json(Report([result])))
         self.assertEqual(result.data['route'], 'system_or_process_proxy')
 
@@ -60,7 +60,7 @@ class IPv6ProbeTests(unittest.TestCase):
                 self.assertEqual(result.status, 'completed')
                 self.assertEqual(result.data['ip'], V6)
                 self.assertIsNone(result.data['same_ip'])
-                text = render_text(Report([result]))
+                text = render_text(Report([result]), details=True)
                 self.assertIn('1/2 个来源返回 IPv6', text)
                 self.assertIn('查询超时' if isinstance(primary, ProviderError) else 'DNS 无法解析', text)
                 self.assertEqual(len(result.data['observations']), 2)
@@ -70,7 +70,7 @@ class IPv6ProbeTests(unittest.TestCase):
         self.assertEqual(result.status, 'unknown')
         self.assertIn('探测超时', result.summary)
         self.assertIn('2 个来源', result.summary)
-        text = render_text(Report([result]))
+        text = render_text(Report([result]), details=True)
         for value in ('未验证', '探测超时', '当前请求路径'):
             self.assertIn(value, text)
         self.assertNotIn('已关闭', text)
@@ -80,7 +80,7 @@ class IPv6ProbeTests(unittest.TestCase):
         result = check(ProbeClient(ProviderError('DNS 无法解析查询服务域名'), ProviderError('DNS 无法解析查询服务域名')))
         self.assertIn('DNS 解析失败', result.summary)
         result = check(ProbeClient(ProviderError('查询超时'), ProviderError('TLS 证书验证失败')))
-        text = render_text(Report([result]), width=92)
+        text = render_text(Report([result]), details=True, width=92)
         self.assertIn('ipify IPv6', result.summary)
         self.assertIn('icanhazip IPv6', result.summary)
         self.assertIn('TLS 证书验证失败', text)
@@ -92,7 +92,7 @@ class IPv6ProbeTests(unittest.TestCase):
         self.assertEqual(result.severity, 'warning')
         self.assertNotIn('ip', result.data)
         self.assertFalse(result.data['same_ip'])
-        text = render_text(Report([result]))
+        text = render_text(Report([result]), details=True)
         for address in (V6, OTHER_V6):
             self.assertIn(address, text)
         self.assertIn('域名分流', text)

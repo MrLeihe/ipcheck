@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ipcheck-local"
-version = "0.1.0"
-description = "Evidence-based local network and browser environment diagnostics"
+version = "0.2.0"
+description = "Evidence-based Claude AI IP risk, proxy, DNS and timezone diagnostics"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -19,7 +19,7 @@ ipcheck = "ipcheck.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-ipcheck = ["static/**/*", "static/*"]
+ipcheck = ["data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

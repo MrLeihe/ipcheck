@@ -1,14 +1,13 @@
 # ipcheck collaboration rules
 
-- Python 3.11+, standard library runtime; React / TypeScript / Vite for the local UI.
-- Do not run a build or start a development server without explicit user authorization.
-- Do not perform automated visual review without explicit user authorization.
+- Python 3.11+, standard library runtime; no local web server and no frontend bundle.
+- Browser-side checks (fingerprint, WebRTC, DNS leak) stay delegated to https://ip.net.coffee/claude/; do not add a local UI.
 - Preserve upstream licenses and update docs/upstream-sources.md for adapted code.
 - Collect observations and evidence; never claim account safety or infer bans from language, fonts or timezone.
 - Unknown, unsupported and skipped checks must remain distinguishable from successful checks.
 - Never print, persist, transmit or add fixtures containing real keys, tokens, credentials or raw shell configuration.
 - Local identity checks are opt-in. Never modify user configuration, delete credentials or reset identifiers.
-- The local API binds to loopback and checks Host, Origin and a per-process bearer token.
-- Keep Python models, the JSON Schema and TypeScript protocol aligned; run contract tests when they change.
-- Validate with `PYTHONPATH=src python3 -m unittest discover -s tests -v`, `npm --prefix web run typecheck` and `npm --prefix web run lint`.
+- Supported-region data must cite its source and keep `verified_at` / `effective` current.
+- Keep Python models and the JSON Schema aligned; run contract tests when they change.
+- Validate with `PYTHONPATH=src python3 -m unittest discover -s tests -v`.
 - Network tests use synthetic fixtures. Do not contact diagnostic providers during tests.

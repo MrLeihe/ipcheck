@@ -7,7 +7,7 @@ def check_dns() -> list[CheckResult]:
     return [CheckResult(
         "dns.configuration", "network", "DNS 配置",
         "completed" if available and servers else "unknown", "info",
-        f"发现 {len(servers)} 个配置的解析器" if servers else "未能确认 DNS 配置",
+        f"发现 {len(servers)} 个配置的解析器" if servers else ("未读取到 DNS 服务器" if available else "读取失败"),
         ("配置不等于实际解析路径；VPN、DoH 和分流可能改变解析方式。",),
         {"servers": servers}, source,
     ), CheckResult(

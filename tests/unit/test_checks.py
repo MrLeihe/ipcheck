@@ -1,6 +1,4 @@
-import json
 import unittest
-from pathlib import Path
 
 from ipcheck.checks.claude import classify_endpoint
 from ipcheck.checks.network import check_network, reputation_checks
@@ -9,8 +7,6 @@ from ipcheck.core.models import CheckResult
 from ipcheck.core.summary import summarize
 from ipcheck.platforms.system import parse_dns, parse_macos_proxy
 from ipcheck.providers.http import HttpClient, ProviderError
-from ipcheck.server.browser import merge_browser, validate_snapshot
-from ipcheck.core.models import Report
 
 
 class FakeClient(HttpClient):
@@ -42,7 +38,7 @@ class ChecksTests(unittest.TestCase):
         self.assertEqual(next(item for item in results if item.id == "network.ipv6").status, "unknown")
         summary = summarize(results)
         self.assertGreater(summary["unknown"], 0)
-        self.assertIn("不完整", summary["message"])
+        self.assertEqual(summary["level"], "incomplete")
 
     def test_different_egress_sources_require_attention(self):
         result = check_network(FakeClient(split=True))[0]
@@ -75,19 +71,6 @@ class ChecksTests(unittest.TestCase):
 
     def test_proxy_parse_does_not_return_addresses(self):
         self.assertEqual(parse_macos_proxy("HTTPEnable : 1\nHTTPProxy : user:synthetic-secret@host\nProxyAutoConfigEnable : 1"), ["HTTP", "PAC"])
-
-    def test_browser_language_is_information_not_a_risk_score(self):
-        snapshot = validate_snapshot(json.loads((Path(__file__).parents[1] / "fixtures/browser.json").read_text()))
-        report = merge_browser(Report([]), snapshot)
-        environment = next(item for item in report.checks if item.id == "browser.environment")
-        self.assertEqual(environment.severity, "info")
-        self.assertNotIn("score", environment.data)
-
-    def test_browser_rejects_arbitrary_or_secret_fields(self):
-        snapshot = json.loads((Path(__file__).parents[1] / "fixtures/browser.json").read_text())
-        snapshot["api_key"] = "synthetic-key"
-        with self.assertRaises(ValueError):
-            validate_snapshot(snapshot)
 
     def test_http_transport_rejects_arbitrary_and_insecure_hosts(self):
         client = HttpClient()

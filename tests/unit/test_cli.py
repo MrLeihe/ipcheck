@@ -25,6 +25,14 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn('"unknown": 1', stream.getvalue())
 
+    def test_exit_code_follows_level(self):
+        for level, code in (("clear", 0), ("attention", 1), ("incomplete", 2)):
+            with self.subTest(level=level), \
+                    patch("ipcheck.cli.run_checks", return_value=Report([])), \
+                    patch.object(Report, "to_dict", return_value={"summary": {"level": level}}), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["--json"]), code)
+
     def test_export_does_not_overwrite_existing_file(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "report.json"

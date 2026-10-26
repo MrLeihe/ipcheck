@@ -26,7 +26,7 @@ def classify_endpoint(url: str) -> tuple[str, str, str | None]:
         for domain, label in PROVIDERS.items():
             if host == domain or host.endswith("." + domain):
                 return "provider", f"配置指向已识别服务商：{label}", host
-        return "custom", "配置指向自定义端点，需自行确认服务商", host
+        return "custom", "自定义 API，需确认服务商", host
     except ValueError:
         return "invalid", "地址格式无效", None
 
@@ -55,23 +55,26 @@ def check_claude(home: Path | None = None) -> list[CheckResult]:
         except (OSError, ValueError, UnicodeError):
             unreadable = True
     if not candidates:
-        return [CheckResult("claude.endpoint", "claude", "Claude 端点配置",
+        return [CheckResult("claude.endpoint", "claude", "Claude API 配置",
                             "unknown" if unreadable else "completed", "info",
-                            "部分配置无法读取，无法确认" if unreadable else "未发现用户级端点覆盖",
-                            ("未覆盖项目级、受管设置及运行中客户端；不能据此确认实际直连。",))]
+                            "部分配置无法读取，无法确认" if unreadable else "未发现覆盖，默认使用官方 API",
+                            ("仅检查当前进程环境变量和用户配置。",
+                             "未检查项目配置、受管设置和运行中客户端，不能据此确认客户端使用官方 API。",))]
     evidence: list[str] = []
     descriptions: list[JsonValue] = []
     kinds: list[str] = []
+    summaries: list[str] = []
     signatures: set[tuple[str, str | None]] = set()
     for source, url in candidates:
         kind, summary, host = classify_endpoint(url)
         kinds.append(kind)
+        summaries.append(summary)
         signatures.add((kind, host))
         evidence.append(f"{source}：{summary}" + (f"（{host}）" if host else ""))
         descriptions.append({"source": source, "kind": kind, "host": host})
     conflict = len(signatures) > 1
     issue = conflict or unreadable or any(kind in ("custom", "insecure", "invalid") for kind in kinds)
-    return [CheckResult("claude.endpoint", "claude", "Claude 端点配置", "completed", "warning" if issue else "info",
-                        "多个配置来源不同，需要核对生效设置" if conflict else evidence[0].split("：", 1)[1],
+    return [CheckResult("claude.endpoint", "claude", "Claude API 配置", "completed", "warning" if issue else "info",
+                        "多个配置来源不同，需要核对生效设置" if conflict else summaries[0],
                         tuple(evidence + ["只展示主机和配置来源，不发送密钥、不探测账号，也不推断账号安全。"] + (["部分配置无法读取。"] if unreadable else [])),
                         {"endpoints": descriptions, "conflict": conflict})]

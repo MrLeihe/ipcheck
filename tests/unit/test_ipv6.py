@@ -61,9 +61,9 @@ utun2: flags=8051<UP,POINTOPOINT,RUNNING> mtu 1500
         self.assertEqual(checks[0].status, 'completed')
         self.assertEqual(checks[0].data['mode'], 'off')
         self.assertIn('已关闭', checks[0].summary)
-        self.assertIn('未发现活动公网', checks[1].summary)
+        self.assertIn('无公网 IPv6 地址', checks[1].summary)
         probe = CheckResult('network.ipv6', 'network', '', 'unknown', 'info', 'probe failed')
-        text = render_text(Report(checks + [probe]))
+        text = render_text(Report(checks + [probe]), details=True)
         for value in ('本机 IPv6 配置', '已关闭', 'IPv6 出口探测', '未验证'):
             self.assertIn(value, text)
 
