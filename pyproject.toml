@@ -9,7 +9,7 @@ description = "Evidence-based Claude AI IP risk, proxy, DNS and timezone diagnos
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/*.txt"]
+license-files = ["LICENSE"]
 dependencies = []
 
 [project.scripts]

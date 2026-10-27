@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 from ipcheck.core.models import CheckResult
 from ipcheck.core.privacy import JsonValue
 
-# Exact registrable domains, not substring hints. Attribution: see docs/upstream-sources.md.
+# Exact registrable domains, not substring hints.
 PROVIDERS = {"deepseek.com": "DeepSeek", "moonshot.cn": "Moonshot", "moonshot.ai": "Moonshot",
              "bigmodel.cn": "智谱", "minimax.io": "MiniMax", "minimaxi.com": "MiniMax",
              "dashscope.aliyuncs.com": "阿里云 DashScope"}

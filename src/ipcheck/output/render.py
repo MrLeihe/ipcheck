@@ -572,10 +572,10 @@ def _section(item: dict[str, JsonValue]) -> str:
 
 
 def _table(sections: list[list[Row]], width: int, color: bool) -> list[str]:
-    """Double borders and grouped label/value rows follow the upstream panel design.
+    """Render grouped label/value rows in a double-border table.
 
     Text is wrapped before styling so injected/own ANSI sequences cannot affect
-    column widths. See docs/upstream-sources.md for the reference and changes.
+    column widths.
     """
     dual = width >= 56
     label_width = 20

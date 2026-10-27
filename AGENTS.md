@@ -2,7 +2,7 @@
 
 - Python 3.11+, standard library runtime; no local web server and no frontend bundle.
 - Browser-side checks (fingerprint, WebRTC, DNS leak) stay delegated to https://ip.net.coffee/claude/; do not add a local UI.
-- Preserve upstream licenses and update docs/upstream-sources.md for adapted code.
+- Keep `LICENSE` and the package license metadata consistent with what is shipped.
 - Collect observations and evidence; never claim account safety or infer bans from language, fonts or timezone.
 - Unknown, unsupported and skipped checks must remain distinguishable from successful checks.
 - Never print, persist, transmit or add fixtures containing real keys, tokens, credentials or raw shell configuration.

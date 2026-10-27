@@ -58,17 +58,26 @@ def parse_dns(text: str) -> list[str]:
     return servers
 
 
-def parse_macos_proxy(text: str) -> list[str]:
-    """Adapted from stormzhang/ipcheck; return enabled kinds, never credentials."""
-    config: dict[str, str] = {}
+_PROXY_SWITCHES = (("HTTP", "HTTPEnable"), ("HTTPS", "HTTPSEnable"), ("SOCKS", "SOCKSEnable"))
+_PAC_SWITCH = "ProxyAutoConfigEnable"
+
+
+def _scutil_settings(text: str) -> dict[str, str]:
+    settings: dict[str, str] = {}
     for line in text.splitlines():
-        if ":" in line:
-            key, value = line.split(":", 1)
-            config[key.strip()] = value.strip()
-    kinds = [name for name in ("HTTP", "HTTPS", "SOCKS") if config.get(f"{name}Enable") == "1"]
-    if config.get("ProxyAutoConfigEnable") == "1":
-        kinds.append("PAC")
-    return kinds
+        key, separator, value = line.partition(":")
+        if separator:
+            settings[key.strip()] = value.strip()
+    return settings
+
+
+def parse_macos_proxy(text: str) -> list[str]:
+    """Return the enabled proxy kinds from `scutil --proxy`; never addresses or credentials."""
+    settings = _scutil_settings(text)
+    enabled = [label for label, switch in _PROXY_SWITCHES if settings.get(switch) == "1"]
+    if settings.get(_PAC_SWITCH) == "1":
+        enabled.append("PAC")
+    return enabled
 
 
 def system_proxy() -> tuple[list[str], bool]:

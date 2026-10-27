@@ -4,8 +4,6 @@
 
 浏览器指纹、WebRTC、DNS 泄露属于浏览器侧检测，本工具不重复实现，请访问 <https://ip.net.coffee/claude/>。
 
-基于 [stormzhang/ipcheck](https://github.com/stormzhang/ipcheck) 与 [yacuo/check-cc](https://github.com/yacuo/check-cc) 的部分实现和思路重新组织。来源、版本、修改及许可证见 [上游记录](docs/upstream-sources.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。
-
 ## 环境与安装
 
 - Python 3.11+；运行时没有第三方依赖，不需要 Node.js。
