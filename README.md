@@ -57,6 +57,10 @@ ipcheck --output report.json  # 保存 JSON，仅创建新文件，不覆盖原�
 
 ## 终端报告
 
+![终端报告示例](https://raw.githubusercontent.com/MrLeihe/ipcheck/main/docs/images/cli-report.png)
+
+示例中的 IP、运营商、ASN 等可识别信息已像素化处理。
+
 默认报告分三部分：结论置顶、分区主体、固定页脚。
 
 1. **综合结论**：结论文案与待确认项数量、类别。
