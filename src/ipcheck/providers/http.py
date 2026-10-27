@@ -60,7 +60,7 @@ class HttpClient:
                 raise ProviderError("归属回退仅允许查询已观测的公网 IP") from None
             if parsed.hostname != "ipwho.is" or not address.is_global or parsed.query or parsed.fragment:
                 raise ProviderError("归属回退仅允许查询已观测的公网 IP")
-        request = urllib.request.Request(url, headers={"User-Agent": f"ipcheck-local/{__version__}", "Accept": "application/json,text/plain"})
+        request = urllib.request.Request(url, headers={"User-Agent": f"ipcheck/{__version__}", "Accept": "application/json,text/plain"})
         # urllib honours process/system proxy configuration; never attach application keys.
         handlers = [SafeRedirect(DIRECT_IP_URLS if self.direct_ip else None)]
         if self.direct_location or self.direct_ip:

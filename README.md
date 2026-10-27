@@ -4,37 +4,42 @@
 
 浏览器指纹、WebRTC、DNS 泄露属于浏览器侧检测，本工具不重复实现，请访问 <https://ip.net.coffee/claude/>。
 
-## 环境与安装
+## 安装
 
-- Python 3.11+；运行时没有第三方依赖，不需要 Node.js。
+- Python 3.11+；运行时没有第三方依赖。
 - 首版重点验证 macOS；Linux 有部分配置适配，Windows 未覆盖项会单独标注。
 
-直接运行源码，无需 pip 安装或激活虚拟环境：
+从 PyPI 安装（推荐用 pipx 隔离环境）：
 
 ```bash
-cd /Users/helei/Projects/tools/ipcheck
-./ipcheck --help
-./ipcheck --json
+pipx install claude-ipcheck
 ```
 
-以下命令中的 `ipcheck` 在源码运行时均可替换成 `./ipcheck`。
-
-源码开发安装：
+用 pip 安装到当前环境：
 
 ```bash
-cd /Users/helei/Projects/tools/ipcheck
+python -m pip install claude-ipcheck
+```
+
+安装后直接执行：
+
+```bash
+ipcheck --help
+ipcheck --json
+```
+
+从源码开发：
+
+```bash
+git clone https://github.com/MrLeihe/ipcheck.git
+cd ipcheck
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e . --no-build-isolation
+./ipcheck --help
 ```
 
-如果环境尚无 setuptools，先执行 `python -m pip install 'setuptools>=77'`。
-
-```bash
-pipx install /Users/helei/Projects/tools/ipcheck
-```
-
-分发包名为 `ipcheck-local`，命令为 `ipcheck`。它与旧 `ai-ipcheck` 的命令名称相同；开发时优先使用本项目虚拟环境。
+分发包名为 `claude-ipcheck`，安装后的命令为 `ipcheck`。
 
 ## 命令
 
@@ -97,6 +102,6 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 
 测试只使用人工构造数据及本机临时目录，不调用外部检测服务。
 
-设计见 [架构](docs/architecture.md)、[检测说明](docs/checks.md)；报告格式为 `schemas/report.schema.json`（协议 1.1）。
+设计见 [架构](https://github.com/MrLeihe/ipcheck/blob/main/docs/architecture.md)、[检测说明](https://github.com/MrLeihe/ipcheck/blob/main/docs/checks.md)；报告格式为 [report.schema.json](https://github.com/MrLeihe/ipcheck/blob/main/schemas/report.schema.json)（协议 1.1）。
 
 交互终端显示检测进度、正在执行的项目和累计耗时，完成或中断后清除进度区。`--json`、`--output`、重定向和管道模式不显示动态进度。

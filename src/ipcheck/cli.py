@@ -12,7 +12,7 @@ from ipcheck.output.render import render_json, render_text
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Claude AI 出口 IP、代理、DNS 与时区风险检测；不会保证账号安全。")
-    parser.add_argument("--version", action="version", version=f"ipcheck-local {__version__}")
+    parser.add_argument("--version", action="version", version=f"ipcheck {__version__}")
     parser.add_argument("--json", action="store_true", help="输出脱敏 JSON")
     parser.add_argument("--details", action="store_true", help="展开检测证据与脱敏原始数据")
     parser.add_argument("--local", action="store_true", help="只运行本地配置摘要检查")
