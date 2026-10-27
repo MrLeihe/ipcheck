@@ -1,6 +1,9 @@
+import os
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
-from ipcheck.checks.claude import classify_endpoint
+from ipcheck.checks.claude import check_claude, classify_endpoint
 from ipcheck.checks.network import check_network, reputation_checks
 from ipcheck.checks.timezone import compare_timezone
 from ipcheck.core.models import CheckResult
@@ -55,6 +58,23 @@ class ChecksTests(unittest.TestCase):
         self.assertEqual(classify_endpoint("https://api.anthropic.com.evil.test")[0], "custom")
         self.assertEqual(classify_endpoint("http://api.anthropic.com")[0], "insecure")
         self.assertEqual(classify_endpoint("https://api.anthropic.com:443/v1")[0], "official")
+
+    def test_loopback_http_is_a_local_relay_not_a_plaintext_warning(self):
+        for url in ("http://127.0.0.1:3456", "http://localhost:8080",
+                    "http://[::1]:8080", "https://127.0.0.1:8443"):
+            with self.subTest(url=url):
+                self.assertEqual(classify_endpoint(url)[0], "local")
+        for url in ("http://192.168.1.10:8080", "http://user:pass@127.0.0.1:8080"):
+            with self.subTest(url=url):
+                self.assertEqual(classify_endpoint(url)[0], "insecure")
+        self.assertEqual(classify_endpoint("https://192.168.1.10:8443")[0], "custom")
+
+    def test_loopback_endpoint_stays_informational(self):
+        with patch.dict(os.environ, {"ANTHROPIC_BASE_URL": "http://127.0.0.1:3456"}, clear=True):
+            result = check_claude(Path("/nonexistent-ipcheck-home"))[0]
+        self.assertEqual(result.data["endpoints"][0]["kind"], "local")
+        self.assertNotEqual(result.severity, "warning")
+        self.assertIn("本地", result.evidence[0])
 
     def test_offset_match_is_not_iana_match(self):
         checks = [CheckResult("timezone.system", "system", "", "completed", "info", "", data={"timezone": "Asia/Shanghai"}),

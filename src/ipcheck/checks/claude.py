@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,15 @@ PROVIDERS = {"deepseek.com": "DeepSeek", "moonshot.cn": "Moonshot", "moonshot.ai
              "dashscope.aliyuncs.com": "阿里云 DashScope"}
 
 
+def _is_loopback(host: str) -> bool:
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
 def classify_endpoint(url: str) -> tuple[str, str, str | None]:
     try:
         parsed = urlsplit(url)
@@ -19,8 +29,12 @@ def classify_endpoint(url: str) -> tuple[str, str, str | None]:
         port = parsed.port
         if parsed.scheme not in ("https", "http") or not host:
             return "invalid", "地址格式无效", None
-        if parsed.scheme != "https" or parsed.username or parsed.password:
-            return "insecure", "端点使用明文 HTTP 或包含凭据，需核对", host
+        if parsed.username or parsed.password:
+            return "insecure", "端点 URL 包含凭据，需核对", host
+        if _is_loopback(host):
+            return "local", "本地回环中转地址，官方探测不代表该中转的实际路径", host
+        if parsed.scheme != "https":
+            return "insecure", "端点使用明文 HTTP，需核对", host
         if host == "api.anthropic.com" and port in (None, 443):
             return "official", "配置指向 Anthropic 官方 API 主机", host
         for domain, label in PROVIDERS.items():

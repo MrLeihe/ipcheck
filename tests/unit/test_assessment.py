@@ -138,6 +138,15 @@ class AssessmentTests(unittest.TestCase):
         self.assertNotIn('claude.web.abuse', str(summary['advice']))
         self.assertEqual(summary['level'], 'incomplete')
 
+    def test_local_relay_is_incomplete_without_a_plaintext_warning(self):
+        checks = changed(baseline(), 'claude.endpoint', data={
+            'endpoints': [{'source': '当前进程环境变量', 'kind': 'local', 'host': '127.0.0.1'}]})
+        summary = summarize(checks)
+        self.assertEqual(summary['level'], 'incomplete')
+        ids = {item['id'] for item in summary['advice']}
+        self.assertIn('endpoint.local', ids)
+        self.assertNotIn('endpoint.invalid', ids)
+
     def test_auxiliary_network_warning_changes_level_and_gets_advice(self):
         checks = baseline() + [check('network.egress', {
             'observations': [{'ip': '1.1.1.1'}, {'ip': '2.2.2.2'}]}, severity='warning')]

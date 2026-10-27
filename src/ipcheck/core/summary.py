@@ -206,8 +206,13 @@ def _assessment(checks: Sequence[CheckResult], network_expected: bool = True
             items.append(_advice("endpoint.third_party", "low", "endpoint",
                                  "确认第三方 API 服务商；官方 API 探测不代表该中转的实际路径。",
                                  ["claude.endpoint"]))
+        if "local" in kinds:
+            missing = True
+            items.append(_advice("endpoint.local", "low", "endpoint",
+                                 "检测到本地中转地址；官方 API 探测不代表该中转的实际路径。",
+                                 ["claude.endpoint"]))
         if (endpoint.severity in ("warning", "error")
-                and not kinds.intersection({"invalid", "insecure", "provider", "custom"})
+                and not kinds.intersection({"invalid", "insecure", "provider", "custom", "local"})
                 and not endpoint.data.get("conflict")):
             missing = True
             items.append(_advice("endpoint.partial", "low", "endpoint",
